@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
@@ -25,19 +27,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-data class Module(val emoji: String, val title: String, val description: String)
+data class Module(val id: String, val emoji: String, val title: String, val description: String)
 
 val modules = listOf(
-    Module("📶", "Bluetooth", "Scanne les appareils Bluetooth autour de toi et affiche leur nom et la force du signal."),
-    Module("📡", "Wi-Fi", "Analyse les réseaux Wi-Fi proches : signal, canal et sécurité."),
-    Module("💳", "NFC", "Lis les puces NFC compatibles (cartes, badges, étiquettes)."),
-    Module("📺", "Infrarouge", "Télécommande universelle, si ton téléphone a un émetteur infrarouge."),
-    Module("🌐", "Réseau", "Infos sur ta connexion, ping et tests de débit.")
+    Module("bluetooth", "📶", "Bluetooth", "Trouve les appareils Bluetooth autour de toi et montre leur nom et la force du signal."),
+    Module("wifi", "📡", "Wi-Fi", "Liste les réseaux Wi-Fi proches et te dit quel canal est le moins encombré."),
+    Module("nfc", "💳", "NFC", "Approche une carte ou une étiquette NFC du dos du téléphone pour lire son contenu."),
+    Module("ir", "📺", "Infrarouge", "Utilise l'émetteur infrarouge du téléphone comme télécommande."),
+    Module("network", "🌐", "Réseau", "Affiche ta connexion actuelle et teste la vitesse de réponse d'un site.")
 )
 
 class MainActivity : ComponentActivity() {
@@ -63,7 +66,7 @@ fun App() {
         if (current == null) {
             HomeScreen { selected = it }
         } else {
-            DetailScreen(current) { selected = null }
+            ModuleScreen(current) { selected = null }
         }
     }
 }
@@ -76,9 +79,9 @@ fun HomeScreen(onOpen: (Module) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         modules.forEach { m ->
             Card(modifier = Modifier.fillMaxWidth().clickable { onOpen(m) }) {
-                Row(modifier = Modifier.padding(20.dp)) {
+                Row(modifier = Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text(m.emoji, fontSize = 32.sp)
-                    Spacer(Modifier.padding(8.dp))
+                    Spacer(Modifier.width(16.dp))
                     Text(m.title, fontSize = 22.sp, fontWeight = FontWeight.Medium)
                 }
             }
@@ -87,12 +90,20 @@ fun HomeScreen(onOpen: (Module) -> Unit) {
 }
 
 @Composable
-fun DetailScreen(module: Module, onBack: () -> Unit) {
-    Text("${module.emoji} ${module.title}", fontSize = 28.sp, fontWeight = FontWeight.Bold)
+fun ColumnScope.ModuleScreen(module: Module, onBack: () -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Button(onClick = onBack) { Text("←") }
+        Spacer(Modifier.width(12.dp))
+        Text("${module.emoji} ${module.title}", fontSize = 26.sp, fontWeight = FontWeight.Bold)
+    }
     Spacer(Modifier.height(12.dp))
-    Text(module.description, fontSize = 16.sp)
+    Text(module.description, fontSize = 14.sp)
     Spacer(Modifier.height(12.dp))
-    Text("Ce module sera activé à la prochaine étape.", fontSize = 14.sp)
-    Spacer(Modifier.height(24.dp))
-    Button(onClick = onBack) { Text("Retour") }
+    when (module.id) {
+        "bluetooth" -> BluetoothScreen()
+        "wifi" -> WifiScreen()
+        "nfc" -> NfcScreen()
+        "ir" -> InfraredScreen()
+        "network" -> NetworkScreen()
+    }
 }
